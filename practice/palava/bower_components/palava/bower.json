@@ -1,0 +1,30 @@
+{
+  "name": "palava",
+  "description": "CoffeeScript library for WebRTC",
+  "version": "1.2.0-pre",
+  "author": {
+    "name": "palava e. V.",
+    "email": "contact@palava.tv",
+    "homepage": "https://palava.tv"
+  },
+  "licenses": [
+    {
+      "type": "LPGLv3",
+      "url": "https://raw.github.com/palavatv/palava-client/master/COPYING.LESSER"
+    }
+  ],
+  "dependencies": {
+    "eventEmitter": "~4.2.9",
+    "jquery": "~2.1.1"
+  },
+  "devDependencies": {},
+  "main": [
+    "./palava.js"
+  ],
+  "keywords": [
+    "webrtc",
+    "peerconnection",
+    "getusermedia",
+    "datachannel"
+  ]
+}

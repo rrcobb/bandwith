@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Meine erste Videoapplikation</title>
+  <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+  <script type="text/javascript" src="../bower_components/eventEmitter/EventEmitter.min.js"></script>
+  <script type="text/javascript" src="../bower_components/palava/palava.min.js"></script>
+  <script type="text/javascript">
+
+var channel, session;
+
+channel = new palava.WebSocketChannel('wss://machine.palava.tv');
+
+session = new palava.Session({
+  roomId: "test";
+  channel: channel;
+});
+
+session.on('local_stream_ready', function(stream) {
+  palava.browser.attachMediaStream($('#myvideo'), stream);
+  return session.room.join();
+});
+
+session.on('peer_stream_ready', function(peer) {
+  var element;
+  if (peer.isLocal()) {
+    return;
+  }
+  if ($('#' + peer.id).length > 0) {
+    element = $('#' + peer.id);
+    $('#others').append(element);
+  } else {
+    element = $('<li id="' + peer.id + '"><video autoplay></video></li>');
+  }
+  return palava.browser.attachMediaStream(element.children('video')[0], peer.getStream());
+});
+
+session.on('peer_left', function(peer) {
+  return $('#' + peer.id).remove();
+});
+
+session.init({
+  identity: new palava.Identity({
+    userMediaConfig: {
+      audio: true,
+      video: true
+    }
+  }),
+  options: {
+    stun: 'stun:stun.palava.tv',
+    joinTimeout: 500
+  }
+});
+ 
+  </script>
+ <!-- <script type="text/javascript" src="https://raw.github.com/jashkenas/coffee-script/master/extras/coffee-script.js"></script> -->
+</head>
+<body>
+  <h2>Mein Video</h2>
+  <video id="myvideo" autoplay></video>
+  <h2>Andere Videos:</h2>
+  <ul id="others"></ul>
+</body>
+</html>

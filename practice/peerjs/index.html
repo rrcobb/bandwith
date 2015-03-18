@@ -1,0 +1,100 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+
+<meta name="keywords" content="JavaScript, WebRTC" />
+<meta name="description" content="image swap" />
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
+  
+</head>
+
+<body>
+
+<canvas height="720" width="960" id="can"></canvas>
+
+<script type="text/javascript" src="peer.js"></script>
+<script>
+  var peer = new Peer('first', {key: '1fa8jvja49t9ms4i'});
+  var connection;
+  var loaded = false;
+  
+  peer.on('open', function(id) {
+    console.log('My peer ID is: ' + id);
+
+  });
+
+  peer.on('connection', function(conn) {
+    connection = conn;
+    console.log("first is connected to " + conn.peer);
+    conn.on('data', function(data){
+      console.log('received', data);
+      if (data == "pic please"){
+        if(loaded){
+          var im = new Image();
+          im.src = sessionStorage.getItem("savedImageData");
+          ctx.drawImage(im,0,0);
+          sendPhoto();
+        }
+        else{
+          connection.send("not ready!");
+        }
+      }
+      // connection.send("got it");
+    });
+  });
+
+
+  var img = new Image;
+  var canvas = document.getElementById("can");
+  var ctx = canvas.getContext("2d");
+  var src = "https://scontent-a.xx.fbcdn.net/hphotos-xaf1/v/t1.0-9/538754_10152056531970123_1035893344_n.jpg?oh=e61b560d4851f30d7f884cbdcf1f745d&oe=556A260B";
+
+  img.crossOrigin = "Anonymous";
+
+  img.onload = function() {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage( img, 0, 0 );
+    sessionStorage.setItem( "savedImageData", canvas.toDataURL() );
+    loaded = true;
+  }
+  
+  img.src = src;
+  
+  // make sure the load event fires for cached images too
+  if ( img.complete || img.complete === undefined ) {
+    img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+    img.src = src;
+  }
+
+  function sendPhoto() {
+      // Split data channel message in chunks of this byte length.
+      var CHUNK_LEN = 64000;
+
+      var image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          len = image.data.byteLength,
+          n = len / CHUNK_LEN | 0;
+
+      console.log('Sending a total of ' + len + ' byte(s)');
+      connection.send(len);
+
+      // split the photo and send in chunks of about 64KB
+      for (var i = 0; i < n; i++) {
+          var start = i * CHUNK_LEN,
+              end = (i+1) * CHUNK_LEN;
+          console.log(start + ' - ' + (end-1));
+          connection.send(image.data.subarray(start, end));
+      }
+
+      // send the reminder, if any
+      // if (len % CHUNK_LEN) {
+      //     console.log('last ' + len % CHUNK_LEN + ' byte(s)');
+      //     connection.send(image.data.subarray(n * CHUNK_LEN));
+      // }
+  }
+
+
+</script>
+
+</body>
+</html>

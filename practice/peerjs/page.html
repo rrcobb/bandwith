@@ -1,0 +1,100 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+
+<meta name="keywords" content="JavaScript, WebRTC" />
+<meta name="description" content="image swap" />
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
+  
+</head>
+
+<body>
+
+<canvas height="720" width="960" id="can"></canvas>
+<button id="button" onclick="conn.send('pic please')">Get Picture</button>
+
+
+<script type="text/javascript" src="peer.js"></script>
+<script>
+  var start = new Date().getTime();
+  var peer = new Peer('second', {key: '1fa8jvja49t9ms4i'});
+  var count;
+  var buf;
+  var data;
+  var received = [];
+
+  peer.on('open', function(id) {
+    console.log('My peer ID is: ' + id);
+  });
+
+  var conn = peer.connect('first');  
+  // conn.on('data', function(data){
+  //   console.log('2 got', data);
+  // });
+
+  conn.on('data',function(event){
+    console.log('2 got', event);
+    received[received.length] = event;
+    if(count == null ){
+      buf = window.buf = new Uint8ClampedArray(parseInt(event));
+      count = 0;
+      console.log('Expecting a total of ' + buf.byteLength + ' bytes');
+      return;
+  } else {
+  data = new Uint8ClampedArray(event);
+  buf.set(data, count);
+  count += data.byteLength;
+  if (count == buf.byteLength) {
+      // we're done: all data chunks have been received
+      renderPhoto(buf);
+    }
+  }
+  });
+
+  conn.on('open', function(){
+    conn.send("I'm ready.");
+    console.log("second is connected to " + conn.peer);
+    console.log(conn.metadata);
+    var time = new Date().getTime() - start;
+    conn.send("I waited " + time);
+  });
+  
+function receiveData() {
+    var buf, count;
+
+  return function onmessage(event) {
+    if (typeof event.data === 'string') {
+        buf = window.buf = new Uint8ClampedArray(parseInt(event.data));
+        count = 0;
+        console.log('Expecting a total of ' + buf.byteLength + ' bytes');
+        return;
+      }
+
+    data = new Uint8ClampedArray(event.data);
+    buf.set(data, count);
+
+    count += data.byteLength;
+    console.log('count: ' + count);
+
+    if (count == buf.byteLength) {
+            // we're done: all data chunks have been received
+        console.log('Done. Rendering photo.');
+        renderPhoto(buf);
+      }
+    }
+}
+
+function renderPhoto(data) {
+    var photo = document.getElementById('can');
+    photo.classList.add('photo');
+
+    var canvas = photo.getContext('2d');
+    img = canvas.createImageData(photo.width, photo.height);
+    img.data.set(data);
+    canvas.putImageData(img, 0, 0);
+}
+
+</script>
+
+</body>
+</html>
